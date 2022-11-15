@@ -1,3 +1,4 @@
+#%%
 import numpy as np 
 import torch
 import matplotlib.pyplot as plt
@@ -16,18 +17,19 @@ import torch.nn.functional as F
 #                     PRIMERA PARTE: CARGA DE DATOS E INICIALIZACIÓN DEL MODELO                   #
 ###################################################################################################
 
+ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/Repositorio_completo/'
 ##Carga de datos 
-train_dataset = ImageDataset()
+train_dataset = ImageDataset(ruta)
 train_transform = transforms.Compose([transforms.ToTensor(),])
 train_dataset.transform = train_transform
 
-batch_size=8 #No lo he probado con más porque no tengo suficiente RAM en mi GPU
+batch_size=64 #No lo he probado con más porque no tengo suficiente RAM en mi GPU
 train_loader = DataLoader(train_dataset, batch_size=batch_size)
 
 ##Inicialización de la función de pérdidas y el optimizador:
 loss_fn = torch.nn.MSELoss()
 ### Definición del learning rate
-lr = 0.001
+lr = 1e-3
 ### Semilla aleatoria para obtener resultados reproducibles
 torch.manual_seed(0)
 ### Inicialización de las 2 redes neuronales y fijación de la dimensión del espacio latente
@@ -39,7 +41,7 @@ params_to_optimize = [ #No entiendo que hace esto
     {'params': decoder.parameters()}
 ]
 
-optim = torch.optim.Adam(params_to_optimize, lr=lr, weight_decay=1e-05)
+optim = torch.optim.Adam(params_to_optimize, lr=lr) #, weight_decay=1e-05)
 
 # Comprobación de si la GPU está disponible
 device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
@@ -48,7 +50,7 @@ print(f'Selected device: {device}')
 # Se mueven el encoder y el decoder a la GPU si está disponible
 encoder.to(device)
 decoder.to(device)
-
+#%%
 ###################################################################################################
 #             SEGUNDA PARTE: DEFINICIÓN DE LA FUNCIÓN DE ENTRENAMIENTO DEL MODELO                 #
 ###################################################################################################
@@ -81,6 +83,7 @@ def train_epoch(encoder, decoder, device, dataloader, loss_fn, optimizer):
 
     return np.mean(train_loss)
 
+#%%
 ###################################################################################################
 #        TERCERA PARTE: ENTRENAMIENTO DEL MODELO Y REPRESENTACIÓN DE LA FUNCIÓN DE PÉRDIDAS       #
 ###################################################################################################
@@ -89,6 +92,7 @@ def train_epoch(encoder, decoder, device, dataloader, loss_fn, optimizer):
 num_epochs = 5 # Selecciono solo 5 epochs para que no tarde mucho
 diz_loss = {'train_loss':[]}
 for epoch in range(num_epochs):
+   print(f'Epoch {epoch}:')
    train_loss = train_epoch(encoder,decoder,device,train_loader,loss_fn,optim)
    diz_loss['train_loss'].append(train_loss)
 
@@ -102,16 +106,17 @@ plt.grid()
 plt.legend()
 plt.title('Pérdidas')
 plt.show()
-
+#%%
 ###################################################################################################
 #   CUARTA PARTE: REPRESENTACIÓN DEL ESPACIO LATENTE. ESTA PARTE NO HA SIDO ESTUDIADA TODAVIA     #
 ###################################################################################################
+test_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
 
 ## Visualización del espacio latente
 encoded_samples = []
-for sample in tqdm(train_loader):
-    img = sample[0].unsqueeze(0).to(device)
-    label = sample[1]
+for sample in tqdm(test_dataloader):
+    img = sample.to(device)
+    # label = sample[1]
     # Encode image
     encoder.eval()
     with torch.no_grad():
@@ -119,7 +124,7 @@ for sample in tqdm(train_loader):
     # Append to list
     encoded_img = encoded_img.flatten().cpu().numpy()
     encoded_sample = {f"Enc. Variable {i}": enc for i, enc in enumerate(encoded_img)}
-    encoded_sample['label'] = label
+    # encoded_sample['label'] = label
     encoded_samples.append(encoded_sample)
 encoded_samples = pd.DataFrame(encoded_samples)
 encoded_samples
@@ -135,3 +140,4 @@ px.scatter(encoded_samples, x='Enc. Variable 0', y='Enc. Variable 1',
 #                  color=encoded_samples.label.astype(str),
 #                  labels={'0': 'tsne-2d-one', '1': 'tsne-2d-two'})
 # fig.show()
+# %%
