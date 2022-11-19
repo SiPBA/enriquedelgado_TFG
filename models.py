@@ -63,7 +63,6 @@ class Decoder(nn.Module):
             nn.ConvTranspose3d(16, 8, 3, stride=2, padding=1, output_padding=1),
             nn.BatchNorm3d(8),
             nn.ReLU(True),
-            # En esta operación debe de haber algún error porque las dimensióones de salida no coinciden con las dimensiones originales
             nn.ConvTranspose3d(8, 1, 3, stride=2, padding=1, output_padding=1)
         )
         
