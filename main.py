@@ -59,7 +59,7 @@ def train_epoch(encoder, decoder, device, dataloader, loss_fn, optimizer, image_
     encoder.train()
     decoder.train()
     train_loss = []
-
+    aux = 30
     for image_batch in tqdm(dataloader): 
         # Mueve el tensor a la GPU si está disponible
         image_batch = image_batch[0].to(device)
@@ -69,25 +69,7 @@ def train_epoch(encoder, decoder, device, dataloader, loss_fn, optimizer, image_
         decoded_data = decoder(encoded_data)
         # Ajusto las dimensiones de la imagen reconstruida para que coincidan con la original 
         decoded_data = F.pad(input=decoded_data, pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
-        #############################################################################################################################################
-        #                           CÓDIGO PARA GUARDAR LAS IMÁGENES RECONSTRUIDAS POR EL DECODER:                                                  #
-        #--------------------------------------------------------------------------------------------------------------------------------------------
-        #path = 'C:/TFG/codigo/Reconstruidas/decoded' + str(image_no)+'.nii'
-        #--------------------------------------------------------------------------------------------------------------------------------------------
-        # Para guardarla en 3D:
-        #--------------------------------------------------------------------------------------------------------------------------------------------
-        #nib.save(nib.Nifti1Image(decoded_data.cpu().detach().numpy()[0,0,:,:,:].astype('float64'), np.eye(4)), path)
-        #image_no += 1
-        #--------------------------------------------------------------------------------------------------------------------------------------------
-        # Para guardar una sección en 2D:
-        #--------------------------------------------------------------------------------------------------------------------------------------------
-        #plt.imshow(decoded_data.cpu().detach().numpy()[0,0,:,:,40])
-        #plt.title("Reconstrucción de las imágenes\n conforme avanza el entrenamiento")
-        #plt.savefig('C:/TFG/codigo/SeccionReconstruidas/decoded'+ str(image_no)+'.jpg')
-        #plt.clf()
-        #matplotlib.image.imsave('C:/TFG/codigo/SeccionReconstruidas/decoded'+ str(image_no)+'.png', decoded_data.cpu().detach().numpy()[0,0,:,:,40])
-        #image_no += 1
-        ##############################################################################################################################################
+        # Función de perdidas  
         loss = loss_fn(decoded_data, image_batch)
         # Propagación hacia atrás
         optimizer.zero_grad()
@@ -96,7 +78,27 @@ def train_epoch(encoder, decoder, device, dataloader, loss_fn, optimizer, image_
         # Imprime las pérdidas de cada batch
         #print('\t Pérdidas parciales de entrenamiento (en cada batch): %f' % (loss.data))
         train_loss.append(loss.detach().cpu().numpy())
-
+        ###############################################################################################################
+        #                           CÓDIGO PARA GUARDAR LAS IMÁGENES RECONSTRUIDAS POR EL DECODER:                    #
+        #--------------------------------------------------------------------------------------------------------------
+        #path = 'C:/TFG/codigo/Reconstruidas/decoded' + str(image_no)+'.nii'
+        #--------------------------------------------------------------------------------------------------------------
+        # Para guardarla en 3D:
+        #--------------------------------------------------------------------------------------------------------------
+        #nib.save(nib.Nifti1Image(decoded_data.cpu().detach().numpy()[0,0,:,:,:].astype('float64'), np.eye(4)), path)
+        #image_no += 1
+        #--------------------------------------------------------------------------------------------------------------
+        # Para guardar una sección en 2D:
+        #--------------------------------------------------------------------------------------------------------------
+        #if image_no > 100:
+        #    aux = 700 
+        #plt.imshow(decoded_data.cpu().detach().numpy()[0,0,0:91,0:108,40])
+        #plt.title("Reconstrucción de las imágenes\n conforme avanza el entrenamiento", dict(size=15))
+        #plt.text(110, -5, str(aux)+'FPS', dict(size=15), color='red')
+        #plt.savefig('C:/TFG/codigo/SeccionReconstruidas2/decoded'+ str(image_no)+'.jpg')
+        #plt.clf()
+        #image_no += 1
+        ###############################################################################################################
     return np.mean(train_loss), decoded_data, image_no
 
 #%%
@@ -125,7 +127,14 @@ plt.grid()
 plt.legend()
 plt.title('Función de pérdidas')
 plt.show()
-
+###################################################################################################
+# Guardar el modelo entrenado:                                                                    #
+#--------------------------------------------------------------------------------------------------
+#import os 
+#os.mkdir('C:\TFG\Codigo\Resultados'+str(epoch)+'epochs')
+#torch.save(decoder, 'C:\TFG\Codigo\Resultados'+str(epoch)+'epochsTrained_decoder.pth')
+#torch.save(encoder, 'C:\TFG\Codigo\Resultados'+str(epoch)+'epochs\Trained_encoder.pth')
+###################################################################################################
 #%%
 ###################################################################################################
 #                   CUARTA PARTE: REPRESENTACIÓN DEL ESPACIO LATENTE.                             #
@@ -156,4 +165,22 @@ encoded_samples
 #Representación del espacio latente
 px.scatter(encoded_samples, x='Enc. Variable 0', y='Enc. Variable 1', opacity=0.3)
 
+# %%
+###########################################################################################
+# Código para guardar la función de pérdidas para hacer una animación de su evolución     #
+#------------------------------------------------------------------------------------------
+#a=np.ones(400).astype('int16')
+#for i in tqdm(range(400)):
+#    plt.figure(figsize=(6.4,4.8)) # Para que coincidan las dimensiones para la animación.
+#    plt.semilogy(dizz_loss['train_loss'][0:i], label='Train')
+#    plt.xlabel('Epoch')
+#    plt.ylabel('Pérdidas')
+#    plt.grid()
+#    plt.xlim([-10,400])
+#    plt.ylim([5e-3, 0.3])
+#    plt.legend()
+#    plt.title('Función de pérdidas')
+#    plt.savefig('C:/TFG/codigo/perdidasnuevas/decoded'+ str(i)+'.jpg')
+#    plt.clf()
+###########################################################################################
 # %%
