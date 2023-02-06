@@ -9,7 +9,7 @@ import torch.nn.functional as F
 
 # DATASET:
 class ImageDataset(Dataset):
-    def __init__(self, ruta='/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/'):   
+    def __init__(self, ruta='C:/TFG/IMAGENES_TFG/'):   
         database = pd.read_csv(ruta+'dataset_nuevo.csv')  
         files = list(ruta+database["file"])
         self.files = files
@@ -26,17 +26,17 @@ class ImageDataset(Dataset):
         image = torch.from_numpy(array.astype('float32')) 
         image = F.pad(input=image, pad=(0,5,0,19,0,5), mode='constant', value=0)
         image = torch.reshape(image, (1,96,128,96))     
-        patno = self.database["PATNO"].to_numpy().astype('int16')
-        year = self.database["YEAR"].to_numpy().astype('int16')
-        return image, patno, year 
+        patno = self.database["PATNO"].to_numpy().astype('int16')[idx]
+        year = self.database["YEAR"].to_numpy().astype('int16')[idx]
+        return image, patno, year
 
 
 # DATALOADER:
-# train_dataloader = DataLoader(ImageDataset, batch_size=32, shuffle=False)
+#train_dataloader = DataLoader(ImageDataset, batch_size=32, shuffle=False)
 
 
 # Ejemplo de visualización de imagen:
-# datos = ImageDataset()
-# primera = datos[0]
-# plt.title("Comprobación del funcionamiento del DataLoader")
-# plt.imshow(primera[0,:, :, 40])
+#datos = ImageDataset()
+#primera = datos[130][0]
+#plt.title("Comprobación del funcionamiento del DataLoader")
+#plt.imshow(primera[0, :, 70, :])
