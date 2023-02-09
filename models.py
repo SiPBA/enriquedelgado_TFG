@@ -98,12 +98,14 @@ class CVAE_3D(nn.Module):
             nn.ConvTranspose3d(16, 8, 3, stride=2, padding=1, output_padding=1),
             nn.BatchNorm3d(8),
             nn.ReLU(True),
+            # La línea de abajo va comentada para calcular la media y la varianza de los pixeles
             nn.ConvTranspose3d(8, 1, 3, stride=2, padding=1, output_padding=1),
         )
 
-        # PRUEBAS PARA OBTENER LA MEDIA Y LA VARIANZA DE LOS PIXELES
-        # self.fc3 = nn.Linear(128, encoded_space_dim)
-        # self.fc4 = nn.Linear(128, encoded_space_dim)
+        # PRUEBAS PARA OBTENER LA MEDIA Y LA VARIANZA DE LOS PIXELES 
+        '''No me deja ejecutar estas lineas por falta de memoria (Necesitaría 140TB)'''
+        #self.fc3 = nn.Linear(8*46*62*46, 32*92*124*92)
+        #self.fc4 = nn.Linear(8*46*62*46, 32*92*124*92)
         
     def sample(self, mu, logvar):
         var = torch.exp(0.5 * logvar)
@@ -127,7 +129,7 @@ class CVAE_3D(nn.Module):
         x = self.decoder_CVAE(z)
         #------------------------------------------------------------
         # PRUEBAS PARA OBTENER LA MEDIA Y LA VARIANZA DE LOS PIXELES
-        # # MÉTODO 1:
+        # # MÉTODO 1: No me deja comprobar su funcionamiento por falta de memoria
         #aux = x.view(x.size(0), -1)
         #mu_x = self.fc3(aux)
         #logvar_x = self.fc4(aux)
