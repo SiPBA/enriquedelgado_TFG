@@ -21,14 +21,14 @@ import nibabel as nib
 #--------------------------------------------------------------------------------------------------
 # Eleccion del directorio de trabajo:
 #-------------------------------------
-# ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/'
-ruta = 'C:\TFG\IMAGENES_TFG/'
+ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/'
+# ruta = 'C:\TFG\IMAGENES_TFG/'
 #--------------------------------------
 # Eleccion del modelo de entrenamiento:                                                           
 #--------------------------------------
-# modelo_elegido = 'PCA'
+modelo_elegido = 'PCA'
 # modelo_elegido = 'CAE'
-modelo_elegido = 'CVAE'
+# modelo_elegido = 'CVAE'
 #---------------------------------------------------------------------------------------------------
 # Elección del número de epochs, dimensiones del espacio latente, learning rate y semilla aleatoria 
 # para obtener resultados reproducibles:
@@ -203,7 +203,7 @@ if modelo_elegido == 'PCA':
         label2 = str((image_batch[2].numpy()).astype("int16"))
         year.append(label2)
         # Redimensionado de las imágenes   
-        imgA = nib.Nifti1Image(resize(image[:,:,:,0,0], (91, 109, 91), preserve_range=True), np.eye(4))
+        imgA = nib.Nifti1Image(resize(image[0,0,:,:,:], (91, 109, 91), preserve_range=True), np.eye(4))
         Xdata = imgA.dataobj[mask_data.astype(bool)]
         X.append(Xdata)
 
