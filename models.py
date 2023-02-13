@@ -104,6 +104,8 @@ class CVAE_3D(nn.Module):
 
         # PRUEBAS PARA OBTENER LA MEDIA Y LA VARIANZA DE LOS PIXELES 
         '''No me deja ejecutar estas lineas por falta de memoria (Necesitaría 140TB)'''
+        self.cv1 = nn.Conv3d(1, 1, 3, stride=2, padding=1, output_padding=1)
+        self.cv2 = nn.Conv3d(1, 1, 3, stride=2, padding=1, output_padding=1)
         #self.fc3 = nn.Linear(8*46*62*46, 32*92*124*92)
         #self.fc4 = nn.Linear(8*46*62*46, 32*92*124*92)
         
@@ -131,11 +133,11 @@ class CVAE_3D(nn.Module):
         # PRUEBAS PARA OBTENER LA MEDIA Y LA VARIANZA DE LOS PIXELES
         # # MÉTODO 1: No me deja comprobar su funcionamiento por falta de memoria
         #aux = x.view(x.size(0), -1)
-        #mu_x = self.fc3(aux)
-        #logvar_x = self.fc4(aux)
+        mu_x = self.cv1(x)
+        logvar_x = self.cv2(x)
         # # MÉTODO 2:
-        mu_x = x.mean(dim=(2,3,4), keepdim=True)
-        logvar_x = x.var(dim=(2,3,4), keepdim=True).log()
+        # mu_x = x.mean(dim=(2,3,4), keepdim=True)
+        # logvar_x = x.var(dim=(2,3,4), keepdim=True).log()
         #------------------------------------------------------------
         return x, mu_x, logvar_x
 

@@ -57,11 +57,11 @@ loss_fn = torch.nn.MSELoss()
 def loss_function(image_batch,decoded_data, mu_x, logvar_x, mu_latent, logvar_latent, beta=1.):
     '''Función que realiza el cómputo de la función de pérdidas bajo una asunción de gaussianidad. '''
     # neg log likelihood of x under normal assumption
-    # LOG_2_PI = torch.log(2.0 * torch.acos(torch.zeros(1))).item()
-    # loss_rec = -torch.sum((-0.5 * LOG_2_PI + (-0.5 * logvar_x) + (-0.5 / torch.exp(logvar_x)) * (decoded_data - mu_x) ** 2.0), dim=1)
+    LOG_2_PI = torch.log(2.0 * torch.acos(torch.zeros(1))).item()
+    loss_rec = -torch.sum((-0.5 * LOG_2_PI + (-0.5 * logvar_x) + (-0.5 / torch.exp(logvar_x)) * (image_batch - mu_x) ** 2.0), dim=1)
     ######################################################################################
     # Simplificación utilizada hasta solucionar la obtención correcta de mu_x y logvar_x:
-    loss_rec = loss_fn(decoded_data, image_batch)
+    # loss_rec = loss_fn(decoded_data, image_batch)
     #------------------------------------------------------------------------------------- 
     KLD = -0.5 * torch.sum(1 + logvar_latent- mu_latent.pow(2) - logvar_latent.exp(), dim=1)
     return torch.mean(loss_rec + beta * KLD)
