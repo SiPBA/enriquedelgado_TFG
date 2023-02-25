@@ -1,3 +1,14 @@
+###################################################################################################
+# DEFINICIÓN DE LA ARQUITECTURA DE LOS MODELOS:                                                   #
+#--------------------------------------------------------------------------------------------------
+# Este script define dos arquitecturas para dos modelos diferentes:                               #
+#--------------------------------------------------------------------------------------------------
+# 1. Arquitectura de un AutoEncoder Convolucional (CAE). Compuesto por una sección convolucional  #
+# con 3 capas convolucionales, una capa de aplanado y una sección lineal compuesta de dos capas   #
+# lineales.                                                                                       #
+#--------------------------------------------------------------------------------------------------
+# 2. Arquitectura de un AutoEncoder Convolucional Variacional (CVAE). Compuesto igual que el CAE. #
+#--------------------------------------------------------------------------------------------------
 import torch
 from torch import nn
 ###################################################################################################
@@ -82,7 +93,7 @@ class CVAE_3D(nn.Module):
             nn.ReLU(True)
         )
 
-        # Capas fully connected para computar mu y sigma
+        # Capas fully connected para computar la media y el logaritmo de la varianza del espacio latente
         self.fc1 = nn.Linear(128, encoded_space_dim)
         self.fc2 = nn.Linear( 128, encoded_space_dim)
 
@@ -98,20 +109,22 @@ class CVAE_3D(nn.Module):
             nn.ConvTranspose3d(16, 8, 3, stride=2, padding=1, output_padding=1),
             nn.BatchNorm3d(8),
             nn.ReLU(True),
-            # La línea de abajo va comentada para calcular la media y la varianza de los pixeles
             nn.ConvTranspose3d(8, 1, 3, stride=2, padding=1, output_padding=1),
         )
 
-        # PRUEBAS PARA OBTENER LA MEDIA Y LA VARIANZA DE LOS PIXELES 
-        '''No me deja ejecutar estas lineas por falta de memoria (Necesitaría 140TB)'''
-        self.cv1 = nn.Conv3d(1, 1, 3, stride=2, padding=1, output_padding=1)
-        self.cv2 = nn.Conv3d(1, 1, 3, stride=2, padding=1, output_padding=1)
-        #self.fc3 = nn.Linear(8*46*62*46, 32*92*124*92)
-        #self.fc4 = nn.Linear(8*46*62*46, 32*92*124*92)
-        
+        # Capas convolucionales para computar la media y el logaritmo de la varianza de los pixeles de la imagen recontruida
+        self.cv1 = nn.Sequential(
+            nn.Conv3d(1, 8, 3, stride=2, padding=1),
+            nn.ConvTranspose3d(8, 1, 3, stride=2, padding=1, output_padding=1)
+        )
+        self.cv2 = nn.Sequential(
+            nn.Conv3d(1, 8, 3, stride=2, padding=1),
+            nn.ConvTranspose3d(8, 1, 3, stride=2, padding=1, output_padding=1)
+        )
+
     def sample(self, mu, logvar):
         var = torch.exp(0.5 * logvar)
-        # Reparametrización Trick para poder computar los gradientes y hacer backpropagation
+        # Truco de reparametrización para poder computar los gradientes y hacer la propagación hacia atrás
         eps = torch.randn_like(var)
         z = mu + var * eps
         return z
@@ -129,16 +142,8 @@ class CVAE_3D(nn.Module):
 
     def decode(self, z):
         x = self.decoder_CVAE(z)
-        #------------------------------------------------------------
-        # PRUEBAS PARA OBTENER LA MEDIA Y LA VARIANZA DE LOS PIXELES
-        # # MÉTODO 1: No me deja comprobar su funcionamiento por falta de memoria
-        #aux = x.view(x.size(0), -1)
         mu_x = self.cv1(x)
         logvar_x = self.cv2(x)
-        # # MÉTODO 2:
-        # mu_x = x.mean(dim=(2,3,4), keepdim=True)
-        # logvar_x = x.var(dim=(2,3,4), keepdim=True).log()
-        #------------------------------------------------------------
         return x, mu_x, logvar_x
 
     def forward(self, x):
