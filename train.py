@@ -28,13 +28,15 @@ def train_epoch(model, dataloader, optimizer, epoch, modelo_elegido, guardar_ima
             # Se pasan los datos por el encoder
             z, mu_latent, logvar_latent = model.encode(image_batch)
             # Se pasan los datos por el decoder
-            decoded_data, mu_x, logvar_x = model.decode(z)
+            mu_x, logvar_x = model.decode(z)
+            decoded_data = mu_x
             # Ajuste de las dimensiones de la imagen reconstruida para que coincidan con las de la original 
-            decoded_data = F.pad(input=decoded_data, pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
-            mu_x = F.pad(input=mu_x, pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
-            logvar_x = F.pad(input=logvar_x, pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
+            decoded_data = F.pad(input=decoded_data.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
+            mu_x = F.pad(input=mu_x.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
+            logvar_x = F.pad(input=logvar_x.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
             # Función de perdidas  
-            loss = loss_function(image_batch, decoded_data, mu_x, logvar_x, mu_latent, logvar_latent)
+            loss = loss_function(image_batch, mu_x, logvar_x, mu_latent, logvar_latent)
+            #loss = loss_BCE(decoded_data, image_batch, mu_latent, logvar_latent)
             # Cómputo de gradientes y propagación hacia atrás
             optimizer.zero_grad()
             loss.backward()
