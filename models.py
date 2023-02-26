@@ -147,7 +147,7 @@ class CVAE_3D(nn.Module):
         #logvar_x = self.cv2(x)
         mu_x = x[:,0,:,:,:]
         logvar_x = x[:,1,:,:,:]
-        return mu_x, mu_x, logvar_x
+        return mu_x, logvar_x
 
     def forward(self, x):
         z, mu, logvar = self.encode(x)
