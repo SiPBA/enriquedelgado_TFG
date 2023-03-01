@@ -10,7 +10,7 @@
 # 3. guarda_imag: Guarda 3 cortes de la imagen reconstruida por el decoder en cada epoch.         #
 #--------------------------------------------------------------------------------------------------
 # 4. anima_latente: Guarda 3 gráficas con distintas representaciones de variables latentes frente #
-#                   a otras para.                                                                 #
+#                   a otras.                                                                      #
 #--------------------------------------------------------------------------------------------------
 # 5. representa_perdidas: Representa la función de pérdidas del entrenamiento del modelo.         #
 #--------------------------------------------------------------------------------------------------
@@ -74,41 +74,41 @@ def representacion_latente(espacio_latente):
     fig = plt.figure(figsize=(15, 10))
     fig.suptitle("Posición del sujeto " + str(espacio_latente["Sujeto"][paciente]), fontsize=20, fontweight='bold', y=0.93)
     # Variable 0 vs Variable 1
-    plt.subplot(2,3,1)
+    plt.subplot(1,2,1)
     plt.scatter(espacio_latente["Variable 0"][:], espacio_latente["Variable 1"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
     plt.scatter(espacio_latente["Variable 0"][paciente], espacio_latente["Variable 1"][paciente], color=[0,0.3,1])
     plt.xlabel('Variable 0')
     plt.ylabel('Variable 1')
     # Variable 0 vs Variable 2
-    plt.subplot(2,3,2)
-    plt.scatter(espacio_latente["Variable 0"][:], espacio_latente["Variable 2"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
-    plt.scatter(espacio_latente["Variable 0"][paciente], espacio_latente["Variable 2"][paciente], color=[0,0.3,1])
-    plt.xlabel('Variable 0')
-    plt.ylabel('Variable 2')
+    # plt.subplot(1,2,2)
+    # plt.scatter(espacio_latente["Variable 0"][:], espacio_latente["Variable 2"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
+    # plt.scatter(espacio_latente["Variable 0"][paciente], espacio_latente["Variable 2"][paciente], color=[0,0.3,1])
+    # plt.xlabel('Variable 0')
+    # plt.ylabel('Variable 2')
     # Variable 0 vs Variable 3
-    plt.subplot(2,3,3)
-    plt.scatter(espacio_latente["Variable 0"][:], espacio_latente["Variable 3"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
-    plt.scatter(espacio_latente["Variable 0"][paciente], espacio_latente["Variable 3"][paciente], color=[0,0.3,1])
-    plt.xlabel('Variable 0')
-    plt.ylabel('Variable 3')
-    # Variable 1 vs Variable 2
-    plt.subplot(2,3,4)
-    plt.scatter(espacio_latente["Variable 1"][:], espacio_latente["Variable 2"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
-    plt.scatter(espacio_latente["Variable 1"][paciente], espacio_latente["Variable 2"][paciente], color=[0,0.3,1])
-    plt.xlabel('Variable 1')
-    plt.ylabel('Variable 2')
-    # Variable 1 vs Variable 3
-    plt.subplot(2,3,5)
-    plt.scatter(espacio_latente["Variable 1"][:], espacio_latente["Variable 3"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
-    plt.scatter(espacio_latente["Variable 1"][paciente], espacio_latente["Variable 3"][paciente], color=[0,0.3,1])
-    plt.xlabel('Variable 1')
-    plt.ylabel('Variable 3')
+    # plt.subplot(2,3,3)
+    # plt.scatter(espacio_latente["Variable 0"][:], espacio_latente["Variable 3"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
+    # plt.scatter(espacio_latente["Variable 0"][paciente], espacio_latente["Variable 3"][paciente], color=[0,0.3,1])
+    # plt.xlabel('Variable 0')
+    # plt.ylabel('Variable 3')
+    # # Variable 1 vs Variable 2
+    # plt.subplot(2,3,4)
+    # plt.scatter(espacio_latente["Variable 1"][:], espacio_latente["Variable 2"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
+    # plt.scatter(espacio_latente["Variable 1"][paciente], espacio_latente["Variable 2"][paciente], color=[0,0.3,1])
+    # plt.xlabel('Variable 1')
+    # plt.ylabel('Variable 2')
+    # # Variable 1 vs Variable 3
+    # plt.subplot(2,3,5)
+    # plt.scatter(espacio_latente["Variable 1"][:], espacio_latente["Variable 3"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
+    # plt.scatter(espacio_latente["Variable 1"][paciente], espacio_latente["Variable 3"][paciente], color=[0,0.3,1])
+    # plt.xlabel('Variable 1')
+    # plt.ylabel('Variable 3')
     # Variable 2 vs Variable 3
-    plt.subplot(2,3,6)
-    plt.scatter(espacio_latente["Variable 2"][:], espacio_latente["Variable 3"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
-    plt.scatter(espacio_latente["Variable 2"][paciente], espacio_latente["Variable 3"][paciente], color=[0,0.3,1])
-    plt.xlabel('Variable 2')
-    plt.ylabel('Variable 3')
+    # plt.subplot(2,3,6)
+    # plt.scatter(espacio_latente["Variable 2"][:], espacio_latente["Variable 3"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
+    # plt.scatter(espacio_latente["Variable 2"][paciente], espacio_latente["Variable 3"][paciente], color=[0,0.3,1])
+    # plt.xlabel('Variable 2')
+    # plt.ylabel('Variable 3')
 
 #--------------------------------------------------------------------------------------------------
 def guarda_imag(decoded_data, patno, year, epoch, modelo_elegido, num_epochs, d):
@@ -167,8 +167,8 @@ def anima_latente(espacio_latente, epoch, modelo_elegido, num_epoch, d):
             plt.xlim([-1500, 1500])
             plt.ylim([-1500, 1500])
         else:
-            plt.xlim([-50, 50])
-            plt.ylim([-50, 50])
+            plt.xlim([-10, 10])
+            plt.ylim([-10, 10])
         plt.title("Evolución del sujeto " + str(espacio_latente["Sujeto"][paciente]))
         # ELEGIR DIRECTORIO:
         plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/EspacioLatente1/Paciente_'+ str(espacio_latente["Sujeto"][paciente])+'_'+str(espacio_latente["Año"][paciente])+"_"+str(epoch)+'.jpg')
@@ -184,8 +184,8 @@ def anima_latente(espacio_latente, epoch, modelo_elegido, num_epoch, d):
             plt.xlim([-1500, 1500])
             plt.ylim([-1500, 1500])
         else:
-            plt.xlim([-50, 50])
-            plt.ylim([-50, 50])
+            plt.xlim([-10, 10])
+            plt.ylim([-10, 10])
         plt.title("Evolución del sujeto " + str(espacio_latente["Sujeto"][paciente]))
         # ELEGIR DIRECTORIO:
         plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/EspacioLatente2/Paciente_'+ str(espacio_latente["Sujeto"][paciente])+'_'+str(espacio_latente["Año"][paciente])+"_"+str(epoch)+'.jpg')
@@ -201,8 +201,8 @@ def anima_latente(espacio_latente, epoch, modelo_elegido, num_epoch, d):
             plt.xlim([-1500, 1500])
             plt.ylim([-1500, 1500])
         else:
-            plt.xlim([-50, 50])
-            plt.ylim([-50, 50])
+            plt.xlim([-10, 10])
+            plt.ylim([-10, 10])
         plt.title("Evolución del sujeto " + str(espacio_latente["Sujeto"][paciente]))
         # ELEGIR DIRECTORIO:
         plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/EspacioLatente3/Paciente_'+ str(espacio_latente["Sujeto"][paciente])+'_'+str(espacio_latente["Año"][paciente])+"_"+str(epoch)+'.jpg')
