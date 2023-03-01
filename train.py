@@ -97,7 +97,7 @@ def train(modelo_elegido, train_dataset, num_epochs, model, device, optim, guard
         X =np.vstack(X)
         pca = PCA(n_components=d)
         Z = pca.fit_transform(X)
-        espacio_latente = pd.DataFrame(data = Z, columns = ['Variable 0','Variable 1', 'Variable 2', 'Variable 3', 'Variable 4', 'Variable 5', 'Variable 6']) #Falta automatizar para cualquier dimensión latente
+        espacio_latente = pd.DataFrame(data = Z, columns = [f'Variable {i}' for i in range(d)])
         year = [year.strip("[]") for year in year]
         sujeto = [sujeto.strip("[]") for sujeto in sujeto]
         espacio_latente['Año'] = year
@@ -105,6 +105,8 @@ def train(modelo_elegido, train_dataset, num_epochs, model, device, optim, guard
         print('------------------------------------------------------------------\n\t\t    VARIABLES LATENTES OBTENIDAS:\n------------------------------------------------------------------')
         print(espacio_latente)
         representacion_latente(espacio_latente)
+        diz_loss = []
+        return diz_loss, espacio_latente
 
     else:
         # Entrenamiento del modelo
