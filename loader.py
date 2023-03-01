@@ -1,3 +1,6 @@
+###################################################################################################
+# CARGADOR DE LOS DATOS PARA EL ENTRENAMIENTO Y ANÁLISIS DE LOS RESULTADOS.                       #
+#--------------------------------------------------------------------------------------------------
 import numpy as np 
 import nibabel as nib
 import torch
@@ -28,7 +31,22 @@ class ImageDataset(Dataset):
         image = torch.reshape(image, (1,96,128,96))     
         patno = self.database["PATNO"].to_numpy().astype('int16')[idx]
         year = self.database["YEAR"].to_numpy().astype('int16')[idx]
-        return image, patno, year
+        #Sintomatologia:
+        tremor = self.database["tremor"].to_numpy().astype('int16')[idx]
+        tremor_on = self.database["tremor_on"].to_numpy().astype('int16')[idx]
+        updrs_totscore_on = self.database["updrs_totscore_on"].to_numpy().astype('int16')[idx]
+        updrs1_score = self.database["updrs1_score"].to_numpy().astype('int16')[idx]
+        updrs2_score = self.database["updrs2_score"].to_numpy().astype('int16')[idx]
+        updrs3_score = self.database["updrs3_score"].to_numpy().astype('int16')[idx]
+        updrs4_score = self.database["updrs4_score"].to_numpy().astype('int16')[idx]
+        ptau = self.database["ptau"].to_numpy().astype('int16')[idx]
+        asyn = self.database["asyn"].to_numpy().astype('int16')[idx]
+        rigidity = self.database["rigidity"].to_numpy().astype('int16')[idx]
+        rigidity_on = self.database["rigidity_on"].to_numpy().astype('int16')[idx]
+        nhy = self.database["NHY"].to_numpy().astype('int16')[idx]
+        nhy_on = self.database["NHY_ON"].to_numpy().astype('int16')[idx]
+
+        return image, patno, year, tremor, tremor_on, updrs_totscore_on, updrs1_score, updrs2_score, updrs3_score, updrs4_score, ptau, asyn, rigidity, rigidity_on, nhy, nhy_on
 
 
 # DATALOADER:
