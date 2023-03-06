@@ -20,7 +20,7 @@ from tqdm import tqdm
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error, r2_score
 from sklearn.gaussian_process import GaussianProcessRegressor
-
+from matplotlib import colors
 ###################################################################################################
 # PRIMERA PARTE: ANÁLISIS CUANTITATIVO DE LOS RESULTADOS                                          #
 #--------------------------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ elif num_variables == 8:
     elif modelo == 'CVAE':
         print("No se tienen datos de 8 variables latentes para este modelo")
     else:
-        path = 'C:/TFG/Trabajo/Resultados/8_dimensiones_latentes/700epochs/CAE/ModeloEntrenado/variables_latentes.csv'
+        path = 'C:/TFG/Trabajo/Resultados/8_dimensiones_latentes/1000epochs/CAE/ModeloEntrenado/variables_latentes.csv'
 
 elif num_variables == 16:
     if modelo == 'PCA':
@@ -67,7 +67,7 @@ else:
 ###################################################################################################
 #                                          CARGA DE DATOS:
 #-------------------------------------------------------------------------------------------------
-df_latente = pd.read_csv(path)#, encoding="ISO-8859-1" )
+df_latente = pd.read_csv(path, index_col=0, encoding="ISO-8859-1" )
 
 dataset = ImageDataset()
 img_list = []
@@ -120,7 +120,7 @@ df_latente["nhy_on"] = nhy_on_list
 #                                 REGRESION DE PROCESOS GAUSSIANOS:                               #
 #-------------------------------------------------------------------------------------------------
 # Cargo las variables lataentes en X y una variable de sintomatologia en y
-X = df_latente.iloc[:, 1:num_variables+1].to_numpy()
+X = df_latente.iloc[:, 0:num_variables].to_numpy()
 y = df_latente["updrs_totscore_on"].to_numpy()
 # Separo en conjunto de test y de entrenamiento
 X_train, X_test = X[:-20], X[-20:]
@@ -147,10 +147,10 @@ print("MSE: ",mse, "\nCoeficiente de determinación: ",r2)
 #                                        REGRESION LINEAL:                                        #
 #-------------------------------------------------------------------------------------------------
 # Cargo las variables lataentes en variables_X y las variables de sintomatologia en variables_Y
-variables_X = df_latente.iloc[:, 1:num_variables+1].to_numpy()
-variables_Y = df_latente.iloc[:,num_variables+3:].to_numpy()
+variables_X = df_latente.iloc[:, 0:num_variables].to_numpy()
+variables_Y = df_latente.iloc[:,num_variables+2:].to_numpy()
 # Cargo una sola variable de sintomatología
-variables_Y = variables_Y[:, 0]
+variables_Y = variables_Y[:, 4]
 # Separo en conjunto de test y de entrenamiento
 variables_X_train, variables_X_test = variables_X[:-20], variables_X[-20:]
 variables_Y_train, variables_Y_test = variables_Y[:-20], variables_Y[-20:]
@@ -184,6 +184,8 @@ def plot_components(proj, variable_latente1, variable_latente2,
     ax = ax or plt.gca()   
     ax.plot(proj[:, 0], proj[:, 1], '.k')
 
+    max_value = images.max()
+    min_value = images.min()
     if images is not None:
         min_dist_2 = (thumb_frac * max(proj.max(0) - proj.min(0))) ** 2
         shown_images = np.array([2 * proj.max(0)])
@@ -194,41 +196,41 @@ def plot_components(proj, variable_latente1, variable_latente2,
                 continue
             shown_images = np.vstack([shown_images, proj[i]])
             imagebox = offsetbox.AnnotationBbox(
-                offsetbox.OffsetImage(images[i], cmap=cmap),
-                                      proj[i])
+                offsetbox.OffsetImage(images[i], cmap=cmap, norm=colors.Normalize(vmax=max_value,vmin=min_value)), proj[i])
             ax.add_artist(imagebox)
-            ax.set_xlabel('Variable latente'+str(variable_latente1))
-            ax.set_ylabel('Variable latente'+str(variable_latente2))
-            
-variable_latente1 = 1
-variable_latente2 = 1
+        ax.set_xlabel('Variable latente'+str(variable_latente1))
+        ax.set_ylabel('Variable latente'+str(variable_latente2))
+#%%
+variable_latente1 = 0
+variable_latente2 = 0
 Z = df_latente.iloc[:, [variable_latente1, variable_latente2]].to_numpy()
 X = np.squeeze(np.array(img_list))
+idx = np.unravel_index(np.argmax(X), X.shape)
 #####################################################################################
 #                       REPRESENTACIÓN DE LOS CORTES AXIALES:                       #
 #------------------------------------------------------------------------------------
-fig, ax = plt.subplots(figsize=(20, 20))
+fig, ax = plt.subplots(figsize=(15, 15))
 plot_components(Z, # proyecciones en espacio latente
                 variable_latente1, variable_latente2, # Para el título de los ejes
-                images = X[:,::2,::2,40], 
+                images = X[:,::2,::2,idx[-1]], 
                 cmap='inferno')
 #------------------------------------------------------------------------------------
 #####################################################################################
 #                       REPRESENTACIÓN DE LOS CORTES SAGITALES:                     #
 #------------------------------------------------------------------------------------
-fig, ax = plt.subplots(figsize=(20, 20))
+fig, ax = plt.subplots(figsize=(15, 15))
 plot_components(Z, # proyecciones en espacio latente
                 variable_latente1, variable_latente2, # Para el título de los ejes
-                images = np.transpose(np.flip(X[:,55,::2,::2], axis=2), (0,2,1)), 
+                images = np.transpose(np.flip(X[:,idx[1],::2,::2], axis=2), (0,2,1)), 
                 cmap='inferno')
 #------------------------------------------------------------------------------------
 #####################################################################################
 #                       REPRESENTACIÓN DE LOS CORTES CORONALES:                     #
 #------------------------------------------------------------------------------------
-fig, ax = plt.subplots(figsize=(20, 20))
+fig, ax = plt.subplots(figsize=(15, 15))
 plot_components(Z, # proyecciones en espacio latente
                 variable_latente1, variable_latente2, # Para el título de los ejes
-                images = np.transpose(np.flip(X[:,::2,70,::2], axis=2), (0,2,1)), 
+                images = np.transpose(np.flip(X[:,::2,idx[2],::2], axis=2), (0,2,1)), 
                 cmap='inferno')
 #------------------------------------------------------------------------------------
 
@@ -253,8 +255,5 @@ plot_components(Z, # proyecciones en espacio latente
 # # Crear un nuevo mapa de colores con los colores saturados
 # saturated_viridis = mpl.colors.LinearSegmentedColormap.from_list('saturated_viridis', saturated_colors)
 # #-------------------------------------------------------------------------------------------------------
-
-
-
 
 # %%
