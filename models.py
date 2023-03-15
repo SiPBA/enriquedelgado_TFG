@@ -141,7 +141,7 @@ class CVAE_3D(nn.Module):
 
     def forward(self, x):
         z, mu, logvar = self.encode(x)
-        x, mu_x, logvar_x = self.decode(z)
-        return x, mu, logvar, mu_x, logvar_x
+        mu_x, logvar_x = self.decode(z)
+        return z, mu, logvar, mu_x, logvar_x
 
 #--------------------------------------------------------------------------------------------------
