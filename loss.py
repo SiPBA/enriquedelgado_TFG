@@ -30,3 +30,19 @@ def loss_function(image_batch,decoded_data, mu_x, logvar_x, mu_latent, logvar_la
     return torch.mean(loss_rec + beta * KLD)
 
 #--------------------------------------------------------------------------------------------------
+
+# CVAE alternativas:
+def loss_vae_gauss(image_batch,decoded_data, mu_x, logvar_x, mu_latent, logvar_latent, beta=1.):
+    '''Función que realiza el cómputo de la función de pérdidas bajo una asunción de gaussianidad. '''
+    var_x = torch.clip(torch.exp(logvar_x), min=1e-5) # ayuda a que logvar no sea 0 y evita nans. 
+    # neg log likelihood of x under normal assumption
+    LOG_2_PI = torch.log(2.0 * torch.acos(torch.zeros(1))).item()
+    loss_rec = -torch.sum((-0.5 * LOG_2_PI + (-0.5 * var_x) + (-0.5 / torch.exp(var_x)) * (image_batch - mu_x) ** 2.0), dim=[1,2,3,4])
+    #------------------------------------------------------------------------------------- 
+    KLD = -0.5 * torch.sum(1 + logvar_latent- mu_latent.pow(2) - logvar_latent.exp(), dim=1)
+    return torch.mean(loss_rec + beta * KLD)
+
+
+def loss_vae_lognorm(image_batch,decoded_data, mu_x, logvar_x, mu_latent, logvar_latent, beta=1.):
+    '''Función que realiza el cómputo de la función de pérdidas bajo una asunción de gaussianidad. '''
+    #todo
