@@ -29,14 +29,16 @@ def integral_norm(X, base='median'):
     elif base=='gmm':
         model = GaussianMixture(3, covariance_type='diag')
         model.fit(X.reshape(-1, 1))
-        mms = model.means_[model.weights_>.1]
-        norm = sorted(mms)[-1:]
+        select = model.covariances_> 2
+        select = select & (model.weights_>.1).reshape(-1,1)
+        mms = model.means_[select]
+        norm = sorted(mms)[-1]
     return X/norm, model
 
 
 #%% 
 imgs = dataset.groupby('APPRDX').sample(n=2)
-
+#%%
 files = glob.glob(DATA_PATH+'Repositorio_completo/*/Reconstructed_DaTSCAN/*/S*/PPMI_*.nii')
 for index, imname in imgs.iterrows(): 
     patno = imname['PATNO']
