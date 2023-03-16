@@ -33,6 +33,8 @@ def integral_norm(X, base='median'):
         select = select & (model.weights_>.1).reshape(-1,1)
         mms = model.means_[select]
         norm = sorted(mms)[-1]
+        X -= min(model.means_)
+        X = np.clip(X, 0, None)
     return X/norm, model
 
 
