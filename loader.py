@@ -8,24 +8,39 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 import pandas as pd
 import torch.nn.functional as F
+from image_norms import integral_norm
 #import matplotlib.pyplot as plt
 
 # DATASET:
 class ImageDataset(Dataset):
-    def __init__(self, ruta='C:/TFG/IMAGENES_TFG/'):   
+    
+    def __init__(self, ruta='C:/TFG/IMAGENES_TFG/', norm=50):   
+        """_summary_
+            UPDATE 16/03: pakitochus: He añadido el norm en el 
+            constructor de la clase, de manera que luego podamos
+            modificar (como he hecho) la clase 
+        Args:
+            ruta (str, optional): _description_. Defaults to 'C:/TFG/IMAGENES_TFG/'.
+            norm (int, optional): _description_. Defaults to 50.
+        """
         database = pd.read_csv(ruta+'dataset_nuevo.csv')  
         files = list(ruta+database["file"])
         self.files = files
         self.database = database
+        self.norm = norm
 
     def __len__(self):
         return len(self.files)
 
-    def __getitem__(self, idx, norm=50):
+    def __load_img_as_array__(self, idx):
         file = nib.load(self.files[idx])
         array= file.get_fdata()
         array[np.isnan(array)] = 0
-        array = array/norm #Normalizacion de los valores de intensidad
+        array = array/self.norm #Normalizacion de los valores de intensidad
+        return array
+
+    def __getitem__(self, idx):
+        array = self.__load_img_as_array__(idx)
         image = torch.from_numpy(array.astype('float32')) 
         image = F.pad(input=image, pad=(0,5,0,19,0,5), mode='constant', value=0)
         image = torch.reshape(image, (1,96,128,96))     
@@ -49,12 +64,41 @@ class ImageDataset(Dataset):
         return image, patno, year, tremor, tremor_on, updrs_totscore_on, updrs1_score, updrs2_score, updrs3_score, updrs4_score, ptau, asyn, rigidity, rigidity_on, nhy, nhy_on
 
 
+class ImageDatasetNuevo(ImageDataset):
+    # Esto es una clase que hereda de ImageDataset, pero solo
+    # reescribimos el _load_img_as_array para 
+    def __init__(self, ruta='C:/TFG/IMAGENES_TFG/', norm=integral_norm, normkws={'method': 'median'}): 
+        """_summary_
+            UPDATE 16/03: pakitochus: He añadido el norm en el 
+            constructor de la clase, de manera que luego podamos
+            modificar (como he hecho) la clase 
+        Args:
+            ruta (str, optional): _description_. Defaults to 'C:/TFG/IMAGENES_TFG/'.
+            norm (_type_, optional): _description_. Defaults to integral_norm.
+            normkws (dict, optional): _description_. Defaults to {'method': 'median'}.
+        """
+        database = pd.read_csv(ruta+'dataset_novisimo.csv')  
+        files = list(ruta+database["file"])
+        self.files = files
+        self.database = database
+        assert callable(norm) # comprueba que norm sea una función
+        self.norm = norm 
+        self.normkws = normkws # argumentos de la función de normalización
+
+    def __load_img_as_array__(self, idx):
+        file = nib.load(self.files[idx])
+        array= np.squeeze(file.get_fdata())
+        array[np.isnan(array)] = 0
+        array = self.norm(array, **self.normkws)
+        return array
+
+
 # DATALOADER:
 #train_dataloader = DataLoader(ImageDataset, batch_size=32, shuffle=False)
 
 
 # Ejemplo de visualización de imagen:
-#datos = ImageDataset()
-#primera = datos[130][0]
-#plt.title("Comprobación del funcionamiento del DataLoader")
-#plt.imshow(primera[0, :, 70, :])
+# datos = ImageDatasetNuevo(ruta='/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/', normkws={'method': 'gmm'})
+# primera = datos[130][0]
+# plt.title("Comprobación del funcionamiento del DataLoader")
+# plt.imshow(primera[0, 30, :, :])

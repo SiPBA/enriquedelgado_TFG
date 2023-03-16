@@ -16,17 +16,17 @@ dataset = dataset.loc[dataset.APPRDX<3,]
 
 # imgs = ['S215424', 'S187793', 'S142202', 'S124288']
 
-def integral_norm(X, base='median'):
-    assert base in ['median', 'mean', 'mode', 'otsu', 'gmm']
-    if base=='median':
+def integral_norm(X, method='median'):
+    assert method in ['median', 'mean', 'mode', 'otsu', 'gmm']
+    if method=='median':
         norm = np.nanmedian(X[X>0])
-    elif base=='mean':
+    elif method=='mean':
         norm = np.nanmean(X[X>0])
-    elif base=='mode':
+    elif method=='mode':
         norm = mode(X[X>0].flatten()).mode
-    elif base=='otsu':
+    elif method=='otsu':
         norm = filters.threshold_otsu(X)
-    elif base=='gmm':
+    elif method=='gmm':
         model = GaussianMixture(3, covariance_type='diag')
         model.fit(X.reshape(-1, 1))
         select = model.covariances_> 2
@@ -35,7 +35,7 @@ def integral_norm(X, base='median'):
         norm = sorted(mms)[-1]
         X -= min(model.means_)
         X = np.clip(X, 0, None)
-    return X/norm, model
+    return X/norm
 
 
 #%% 
@@ -47,7 +47,7 @@ for index, imname in imgs.iterrows():
     DX = imname['APPRDX']
     img = nib.load(DATA_PATH+imname['file'])
     imdata = img.get_fdata()
-    imnorm, model = integral_norm(imdata, 'gmm')
+    imnorm = integral_norm(imdata, 'gmm')
     plt.figure()
     plt.hist(imnorm.flatten(), bins=100)
     plt.title(f'subject {patno} ({DX})')
