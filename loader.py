@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 import pandas as pd
 import torch.nn.functional as F
 from image_norms import integral_norm
+import h5py
 #import matplotlib.pyplot as plt
 
 # DATASET:
@@ -92,6 +93,46 @@ class ImageDatasetNuevo(ImageDataset):
         array = self.norm(array, **self.normkws)
         return array
 
+
+import torch
+from torch.utils.data import Dataset
+
+class HDFImageDataset(Dataset):
+    def __init__(self, filename):
+        super().__init__()
+        self.filename = filename
+        self.file = h5py.File(self.filename, 'r')
+        self.images_group = self.file['images']
+        self.imagenames = list(self.images_group.keys())
+
+    def __getitem__(self, index):
+        imagename = self.imagenames[index]
+        image_dataset = self.images_group[imagename]
+        image_data = torch.from_numpy(image_dataset[()].astype('float32')) 
+        image_data = F.pad(input=image_data, pad=(0,5,0,19,0,5), mode='constant', value=0)
+        image_data = torch.reshape(image_data, (1,96,128,96))    
+        patno = self.images_group[imagename].attrs["PATNO"]
+        year = self.images_group[imagename].attrs["YEAR"]
+        #Sintomatologia:
+        tremor = self.images_group[imagename].attrs["tremor"]
+        tremor_on = self.images_group[imagename].attrs["tremor_on"]
+        updrs_totscore_on = self.images_group[imagename].attrs["updrs_totscore_on"]
+        updrs1_score = self.images_group[imagename].attrs["updrs1_score"]
+        updrs2_score = self.images_group[imagename].attrs["updrs2_score"]
+        updrs3_score = self.images_group[imagename].attrs["updrs3_score"]
+        updrs4_score = self.images_group[imagename].attrs["updrs4_score"]
+        ptau = self.images_group[imagename].attrs["ptau"]
+        asyn = self.images_group[imagename].attrs["asyn"]
+        rigidity = self.images_group[imagename].attrs["rigidity"]
+        rigidity_on = self.images_group[imagename].attrs["rigidity_on"]
+        nhy = self.images_group[imagename].attrs["NHY"]
+        nhy_on = self.images_group[imagename].attrs["NHY_ON"]
+
+        return image_data, patno, year, tremor, tremor_on, updrs_totscore_on, updrs1_score, updrs2_score, updrs3_score, updrs4_score, ptau, asyn, rigidity, rigidity_on, nhy, nhy_on
+
+
+    def __len__(self):
+        return len(self.imagenames)
 
 # DATALOADER:
 #train_dataloader = DataLoader(ImageDataset, batch_size=32, shuffle=False)

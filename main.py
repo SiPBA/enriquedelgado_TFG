@@ -1,3 +1,4 @@
+#%%
 ###################################################################################################
 # CONFIGURACIÓN DEL SISTEMA, ENTRENAMIENTO Y REPRESENTACIÓN DEL ESPACIO LATENTE:                  #
 #--------------------------------------------------------------------------------------------------
@@ -15,24 +16,25 @@
 # 3. Representación del espacio latente.                                                          #
 #--------------------------------------------------------------------------------------------------
 import torch
-from loader import ImageDataset, DataLoader
+from loader import ImageDataset, ImageDatasetNuevo, HDFImageDataset, DataLoader
 from models import *
 from utils import *
 from train import *
+# from image_norms import integral_norm
 
 ###################################################################################################
 # CONFIGURACIÓN INICIAL DEL SISTEMA:                                                              #
 #--------------------------------------------------------------------------------------------------
 # Eleccion del directorio de trabajo:
 #-------------------------------------
-# ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/'
-ruta = 'C:\TFG\IMAGENES_TFG/'
+ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/'
+# ruta = 'C:\TFG\IMAGENES_TFG/'
 #--------------------------------------
 # Eleccion del modelo de entrenamiento:                                                           
 #--------------------------------------
 # modelo_elegido = 'PCA'
 # modelo_elegido = 'CAE'
-# modelo_elegido = 'CVAE'
+modelo_elegido = 'CVAE'
 #---------------------------------------------------------------------------------------------------
 # Elección del número de epochs, dimensiones del espacio latente, learning rate, imágenes por lote,
 # semilla aleatoria para obtener resultados reproducibles y una variable lógica para guardar los
@@ -41,14 +43,14 @@ ruta = 'C:\TFG\IMAGENES_TFG/'
 num_epochs = 40
 d = 2
 lr = 1e-4
-batch_size = 32
+batch_size = 124
 torch.manual_seed(0)
 guardar_modelo_entrenado = 1
 #---------------------------------------------------------------------------------------------------
 # Parámetro para realizar una animación del proceso de entrenamiento de los modelos CVAE y CAE 
 # (Omitir en PCA)
-animar_latente = 1
-guardar_imagenes = 1
+animar_latente = 0
+guardar_imagenes = 0
 ###################################################################################################
 print('---------------------------------------------------------\nModelo elegido:\t',modelo_elegido)
 
@@ -57,7 +59,9 @@ print('---------------------------------------------------------\nModelo elegido
 ###################################################################################################
 
 # Carga de datos 
-train_dataset = ImageDataset(ruta)
+# train_dataset = ImageDataset(ruta)
+train_dataset = HDFImageDataset('medical_images.hdf5')
+# train_dataset = ImageDatasetNuevo(ruta, norm=integral_norm, normkws={'method': 'gmm'})
 train_loader = DataLoader(train_dataset, batch_size=batch_size)
 
 # Inicialización de los modelos
