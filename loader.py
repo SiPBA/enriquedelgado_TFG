@@ -98,21 +98,27 @@ import torch
 from torch.utils.data import Dataset
 
 class HDFImageDataset(Dataset):
-    def __init__(self, filename):
+    def __init__(self, filename, norm=3):
         super().__init__()
         self.filename = filename
         self.file = h5py.File(self.filename, 'r')
         self.images_group = self.file['images']
         self.imagenames = list(self.images_group.keys())
+        self.norm = norm
 
     def __getitem__(self, index):
         imagename = self.imagenames[index]
-        image_dataset = self.images_group[imagename]
-        image_data = torch.from_numpy(image_dataset[()].astype('float32')) 
-        image_data = F.pad(input=image_data, pad=(0,5,0,19,0,5), mode='constant', value=0)
-        image_data = torch.reshape(image_data, (1,96,128,96))    
+        # Datos de identificación
         patno = self.images_group[imagename].attrs["PATNO"]
         year = self.images_group[imagename].attrs["YEAR"]
+        # Imagen
+        image_dataset = self.images_group[imagename]
+        image_data = torch.from_numpy(image_dataset[()].squeeze().astype('float32')) 
+        image_data = F.pad(input=image_data, pad=(0,5,0,19,0,5), mode='constant', value=0)
+        try:
+            image_data = torch.reshape(image_data, (1,96,128,96))/self.norm
+        except:
+            print(f'{patno} - {year}') 
         #Sintomatologia:
         tremor = self.images_group[imagename].attrs["tremor"]
         tremor_on = self.images_group[imagename].attrs["tremor_on"]
@@ -143,3 +149,11 @@ class HDFImageDataset(Dataset):
 # primera = datos[130][0]
 # plt.title("Comprobación del funcionamiento del DataLoader")
 # plt.imshow(primera[0, 30, :, :])
+
+#%% Delete files from h5py
+# import h5py
+
+# # Open the HDF file in 'a' mode to allow modification
+# with h5py.File('medical_images.hdf5', 'a') as f:
+#     # Delete the dataset and its attributes
+#     del f['images/3500_V12']

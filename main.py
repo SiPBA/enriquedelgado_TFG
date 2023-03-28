@@ -40,17 +40,17 @@ modelo_elegido = 'CVAE'
 # semilla aleatoria para obtener resultados reproducibles y una variable lógica para guardar los
 # resultados:
 #---------------------------------------------------------------------------------------------------
-num_epochs = 40
-d = 2
+num_epochs = 450
+d = 3
 lr = 1e-4
-batch_size = 124
+batch_size = 64
 torch.manual_seed(0)
 guardar_modelo_entrenado = 1
 #---------------------------------------------------------------------------------------------------
 # Parámetro para realizar una animación del proceso de entrenamiento de los modelos CVAE y CAE 
 # (Omitir en PCA)
-animar_latente = 0
-guardar_imagenes = 0
+animar_latente = 1
+guardar_imagenes = 1
 ###################################################################################################
 print('---------------------------------------------------------\nModelo elegido:\t',modelo_elegido)
 
@@ -77,12 +77,16 @@ if modelo_elegido == 'CAE':
     model.to(device)
 
 elif modelo_elegido == 'CVAE':
-    model = CVAE_3D(encoded_space_dim=d,fc2_input_dim=128) 
-    params_to_optimize = [{'params': model.parameters()}]
-    optim = torch.optim.Adam(params_to_optimize, lr=lr)
+    # opt_model = CVAE_3D(encoded_space_dim=d,fc2_input_dim=128) 
+    opt_model = Conv3DVAE(latent_dim = d)
+    model = torch.compile(opt_model)
+    # model = opt_model
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
     print(f'Dispositivo seleccionado: {device}')
-    model.to(device)
+    model = model.to(device)
+    params_to_optimize = [{'params': model.parameters()}]
+    optim = torch.optim.Adam(params_to_optimize, lr=lr)
+    # optim = torch.optim.SGD(params_to_optimize, lr=lr)#, momentum=0.9)
 
 else:
     model = 0
@@ -100,10 +104,10 @@ if guardar_modelo_entrenado:
     #import os 
     #os.mkdir('C:\TFG\Trabajo\Resultados'+str(num_epochs)+'epochs')
     if modelo_elegido != 'PCA':
-        torch.save(model, 'C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epochs)+'epochs/'+modelo_elegido+'/ModeloEntrenado/modelo_entrenado.pth')
-        espacio_latente.to_csv('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epochs)+'epochs/'+modelo_elegido+'/ModeloEntrenado/variables_latentes.csv')
+        torch.save(model, str(d)+'_dimensiones_latentes/'+str(num_epochs)+'epochs/'+modelo_elegido+'/ModeloEntrenado/modelo_entrenado.pth')
+        espacio_latente.to_csv(str(d)+'_dimensiones_latentes/'+str(num_epochs)+'epochs/'+modelo_elegido+'/ModeloEntrenado/variables_latentes.csv')
     else: 
-        espacio_latente.to_csv('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+modelo_elegido+'/variables_latentes.csv')
+        espacio_latente.to_csv(str(d)+'_dimensiones_latentes/'+modelo_elegido+'/variables_latentes.csv')
 
 #%%
 ############################################################################################################
