@@ -12,7 +12,6 @@ from sklearn.decomposition import PCA
 import pandas as pd
 from utils import df_latente, anima_latente, representacion_latente
 from loss import *
-from torch.nn import Parameter
 
 def train_epoch(model, dataloader, optimizer, epoch, modelo_elegido, guardar_imagenes, num_epochs, device, loss_fn, d):
     '''Función que realiza el proceso de entrenamiento en cada epoch del modelo elegido, pasando los datos por el modelo,
@@ -30,22 +29,17 @@ def train_epoch(model, dataloader, optimizer, epoch, modelo_elegido, guardar_ima
             # z, mu_latent, logvar_latent = model.encode(image_batch)
             # Se pasan los datos por el decoder
             # mu_x, logvar_x = model.decode(z)
-            model.train()
-            optimizer.zero_grad()
             z, mu_latent, logvar_latent, mu_x, logvar_x = model(image_batch)
             decoded_data = mu_x
             # Ajuste de las dimensiones de la imagen reconstruida para que coincidan con las de la original 
-            # decoded_data = F.pad(input=decoded_data.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
-            # mu_x = F.pad(input=mu_x.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
-            # logvar_x = F.pad(input=logvar_x.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
+            decoded_data = F.pad(input=decoded_data.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
+            mu_x = F.pad(input=mu_x.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
+            logvar_x = F.pad(input=logvar_x.reshape(image_batch.shape[0],1,92,124,92), pad=(0,4,0,4,0,4,0,0,0,0), mode='constant', value=0)
             # Función de perdidas  
-            # logvar_x = Parameter(torch.Tensor([0.0])).to(device)
-            # loss = loss_function(image_batch, decoded_data, mu_x, logvar_x, mu_latent, logvar_latent)
-            loss = model.loss_function(image_batch, mu_x, mu_latent, logvar_latent)
-            # loss = loss_litvae(image_batch, mu_x, mu_latent, logvar_latent)
+            loss = loss_function(image_batch, decoded_data, mu_x, logvar_x, mu_latent, logvar_latent)
             #loss = loss_BCE(decoded_data, image_batch, mu_latent, logvar_latent)
             # Cómputo de gradientes y propagación hacia atrás
-            # optimizer.zero_grad()
+            optimizer.zero_grad()
             loss.backward()
             optimizer.step()
             train_loss.append(loss.detach().cpu().numpy())
@@ -123,13 +117,13 @@ def train(modelo_elegido, train_dataset, num_epochs, model, device, optim, guard
         for epoch in range(num_epochs):
             print(f'Epoch {epoch+1} de {num_epochs}:')
             train_loss, decoded_data = train_epoch(model, train_loader, optim, epoch, modelo_elegido, guardar_imagenes, num_epochs, device, loss_fn, d)
-            diz_loss['train_loss'].append(train_loss)
-            print('Valor de la función de pérdidas: %f' % (train_loss),'\n---------------------------------------------------------')
             if animar_latente:
                 print(f'Guardando espacio latente para animación:')
                 test_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
                 espacio_latente = df_latente(test_dataloader, model, modelo_elegido, device)
                 anima_latente(espacio_latente, epoch, modelo_elegido, num_epochs, d)
+            diz_loss['train_loss'].append(train_loss)
+            print('Valor de la función de pérdidas: %f' % (train_loss),'\n---------------------------------------------------------')
         test_dataloader = DataLoader(train_dataset, batch_size=1, shuffle=False)
         espacio_latente = df_latente(test_dataloader, model, modelo_elegido, device)
         return diz_loss, espacio_latente

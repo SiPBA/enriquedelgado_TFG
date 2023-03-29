@@ -21,10 +21,6 @@ import numpy as np
 import torch
 import pandas as pd
 from tqdm import tqdm
-import os
-
-# SAVE_PATH = 'C:/TFG/Trabajo/Resultados/'
-SAVE_PATH = '/home/pakitochus/Descargas/TFG-enrique/Resultados/'
 #--------------------------------------------------------------------------------------------------
 def df_latente(test_dataloader, model, modelo_elegido, device):
     ''' Función para obtener un dataframe con el valor de las variables latentes
@@ -33,36 +29,22 @@ def df_latente(test_dataloader, model, modelo_elegido, device):
     sujeto = []
     year = []
     for sample in tqdm(test_dataloader):
-        img, label1, label2, tremor, tremor_on, updrs_totscore_on, updrs1_score, updrs2_score, updrs3_score, updrs4_score, ptau, asyn, rigidity, rigidity_on, nhy, nhy_on = sample
-        img = img.to(device)
-        label1 = str((label1.numpy()).astype("int16"))
+        img = sample[0].to(device)
+        label1 = str((sample[1].numpy()).astype("int16"))
         sujeto.append(label1)
-        label2 = str((label2.numpy()).astype("int16"))
+        label2 = str((sample[2].numpy()).astype("int16"))
         year.append(label2)
         model.eval()
 
-        if modelo_elegido in ['CVAE', 'genvae']:
+        if modelo_elegido == 'CVAE':
             with torch.no_grad():
-                zsample , encoded_img, _  = model.encode(img)
+                encoded_img, _, _  = model.encode(img)
             encoded_img = encoded_img.flatten().cpu().numpy()      
             encoded_sample = {f"Variable {i}": enc for i, enc in enumerate(encoded_img)}  
             year = [year.strip("[]") for year in year]
             sujeto = [sujeto.strip("[]") for sujeto in sujeto]
             encoded_sample["Sujeto"] = int(sujeto[-1])
             encoded_sample["Año"] = int(year[-1])
-            encoded_sample['tremor'] = int(tremor.numpy().astype('int16'))
-            encoded_sample['tremor_on'] = int(tremor_on.numpy().astype('int16'))
-            encoded_sample['updrs_totscore_on'] = int(updrs_totscore_on.numpy().astype('int16'))
-            encoded_sample['updrs1_score'] = int(updrs1_score.numpy().astype('int16'))
-            encoded_sample['updrs2_score'] = int(updrs2_score.numpy().astype('int16'))
-            encoded_sample['updrs3_score'] = int(updrs3_score.numpy().astype('int16'))
-            encoded_sample['updrs4_score'] = int(updrs4_score.numpy().astype('int16'))
-            encoded_sample['ptau'] = float(ptau.numpy())
-            encoded_sample['asyn'] = float(asyn.numpy())
-            encoded_sample['rigidity'] = int(rigidity.numpy().astype('int16'))
-            encoded_sample['rigidity_on'] = int(rigidity_on.numpy().astype('int16'))
-            encoded_sample['nhy'] = int(nhy.numpy().astype('int16'))
-            encoded_sample['nhy_on'] = int(nhy_on.numpy().astype('int16'))
             espacio_latente.append(encoded_sample)
 
         elif modelo_elegido == 'CAE':
@@ -144,33 +126,25 @@ def guarda_imag(decoded_data, patno, year, epoch, modelo_elegido, num_epochs, d)
     # Para guardar varias secciones en 2D:
     #--------------------------------------------------------------------------------------------------------------
     #aux = 30 # Variable para la generación de imagenes 2D. Indica los FPS a los que se va a animar
-    for idx in range(1):  
-        # ELEGIR DIRECTORIO:
-        dirname = os.path.join(SAVE_PATH, str(d)+'_dimensiones_latentes', str(num_epochs)+'epochs', modelo_elegido, 'ImagenesReconstruidas')
-        patname = 'Paciente_'+ str(patno.numpy()[idx])+'_'+str(year.numpy()[idx])+'_'+str(epoch)+'.jpg'         
+    for idx in range(1):
         #CORTE AXIAL:
         plt.imshow(decoded_data.cpu().detach().numpy()[0,0,0:91,0:108,40], cmap='inferno')
         plt.title("Reconstrucción vista desde un\n corte axial del cerebro", dict(size=15))
         #plt.text(105, -5, str(aux)+'FPS', dict(size=20), color='red') 
-        if not os.path.exists(os.path.join(dirname, 'Axial')):
-            os.makedirs(os.path.join(dirname, 'Axial'))
-        plt.savefig(os.path.join(dirname, 'Axial', patname))
+        # ELEGIR DIRECTORIO:           
+        plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epochs)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/Axial/Paciente_'+ str(patno.numpy()[idx])+'_'+str(year.numpy()[idx])+'_'+str(epoch)+'.jpg')
         plt.clf()
         # CORTE SAGITAL:
         plt.imshow(np.fliplr(np.flip(np.transpose(decoded_data.cpu().detach().numpy()[0,0,55,0:108,0:91]))), cmap='inferno')
         plt.title("Reconstrucción vista desde un\n corte sagital del cerebro", dict(size=15))
         # ELEGIR DIRECTORIO:
-        if not os.path.exists(os.path.join(dirname, 'Sagital')):
-            os.makedirs(os.path.join(dirname, 'Sagital'))
-        plt.savefig(os.path.join(dirname, 'Sagital', patname))
+        plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epochs)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/Sagital/Paciente_'+ str(patno.numpy()[idx])+'_'+str(year.numpy()[idx])+'_'+str(epoch)+'.jpg')
         plt.clf()
         # CORTE CORONAL:
         plt.imshow(np.flip(np.transpose(decoded_data.cpu().detach().numpy()[0,0,0:91,70,0:91])), cmap='inferno')
         plt.title("Reconstrucción vista desde un\n corte coronal del cerebro", dict(size=15))
         # ELEGIR DIRECTORIO:
-        if not os.path.exists(os.path.join(dirname, 'Coronal')):
-            os.makedirs(os.path.join(dirname, 'Coronal'))
-        plt.savefig(os.path.join(dirname, 'Coronal', patname))
+        plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epochs)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/Coronal/Paciente_'+ str(patno.numpy()[idx])+'_'+str(year.numpy()[idx])+'_'+str(epoch)+'.jpg')
         plt.clf()
 
 #--------------------------------------------------------------------------------------------------
@@ -181,11 +155,7 @@ def anima_latente(espacio_latente, epoch, modelo_elegido, num_epoch, d):
     # 704 y 1120 son en este caso el 3540_4 y el 3853_0 respectivamente con updrs_totscore_on de 1140 y 10 respectivamente)
     sujeto = [704, 1120]
     for idx in range(2):
-        # ELEGIR DIRECTORIO:
         paciente = sujeto[idx]
-        dirname = os.path.join(SAVE_PATH, str(d)+'_dimensiones_latentes', str(num_epoch)+'epochs', modelo_elegido, 'ImagenesReconstruidas')
-        patname = 'Paciente_'+ str(espacio_latente["Sujeto"][paciente])+'_'+str(espacio_latente["Año"][paciente])+"_"+str(epoch)+'.jpg'      
-
         # Variable 0 vs Variable 1
         plt.scatter(espacio_latente["Variable 0"][:], espacio_latente["Variable 1"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
         plt.scatter(espacio_latente["Variable 0"][paciente], espacio_latente["Variable 1"][paciente], color=[0,0.3,1])
@@ -200,48 +170,43 @@ def anima_latente(espacio_latente, epoch, modelo_elegido, num_epoch, d):
             plt.xlim([-10, 10])
             plt.ylim([-10, 10])
         plt.title("Evolución del sujeto " + str(espacio_latente["Sujeto"][paciente]))
-        if not os.path.exists(os.path.join(dirname, 'EspacioLatente1')):
-            os.makedirs(os.path.join(dirname, 'EspacioLatente1'))
-        plt.savefig(os.path.join(dirname, 'EspacioLatente1', patname))
+        # ELEGIR DIRECTORIO:
+        plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/EspacioLatente1/Paciente_'+ str(espacio_latente["Sujeto"][paciente])+'_'+str(espacio_latente["Año"][paciente])+"_"+str(epoch)+'.jpg')
         plt.clf()
-        # # Variable 2 vs Variable 3
-        # plt.scatter(espacio_latente["Variable 1"][:], espacio_latente["Variable 2"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
-        # plt.scatter(espacio_latente["Variable 1"][paciente], espacio_latente["Variable 2"][paciente], color=[0,0.3,1])
-        # plt.xlabel('Variable 2')
-        # plt.ylabel('Variable 3')
-        # # plt.xlim([-3000, 2200])
-        # # plt.ylim([-2500, 2400])
-        # if modelo_elegido == 'CAE':
-        #     plt.xlim([-1500, 1500])
-        #     plt.ylim([-1500, 1500])
-        # else:
-        #     plt.xlim([-10, 10])
-        #     plt.ylim([-10, 10])
-        # plt.title("Evolución del sujeto " + str(espacio_latente["Sujeto"][paciente]))
-        # # ELEGIR DIRECTORIO:
-        # if not os.path.exists(os.path.join(dirname, 'EspacioLatente2')):
-        #     os.makedirs(os.path.join(dirname, 'EspacioLatente2'))
-        # plt.savefig(os.path.join(dirname, 'EspacioLatente2', patname))        
-        # plt.clf()
-        # # Variable 4 vs Variable 5
-        # plt.scatter(espacio_latente["Variable 0"][:], espacio_latente["Variable 2"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
-        # plt.scatter(espacio_latente["Variable 0"][paciente], espacio_latente["Variable 2"][paciente], color=[0,0.3,1])
-        # plt.xlabel('Variable 4')
-        # plt.ylabel('Variable 5')
-        # # plt.xlim([-3000, 2200])
-        # # plt.ylim([-2500, 2400])
-        # if modelo_elegido == 'CAE':
-        #     plt.xlim([-1500, 1500])
-        #     plt.ylim([-1500, 1500])
-        # else:
-        #     plt.xlim([-10, 10])
-        #     plt.ylim([-10, 10])
-        # plt.title("Evolución del sujeto " + str(espacio_latente["Sujeto"][paciente]))
-        # # ELEGIR DIRECTORIO:
-        # if not os.path.exists(os.path.join(dirname, 'EspacioLatente3')):
-        #     os.makedirs(os.path.join(dirname, 'EspacioLatente3'))
-        # plt.savefig(os.path.join(dirname, 'EspacioLatente3', patname))  
-        # plt.clf()
+        # Variable 2 vs Variable 3
+        plt.scatter(espacio_latente["Variable 1"][:], espacio_latente["Variable 2"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
+        plt.scatter(espacio_latente["Variable 1"][paciente], espacio_latente["Variable 2"][paciente], color=[0,0.3,1])
+        plt.xlabel('Variable 2')
+        plt.ylabel('Variable 3')
+        # plt.xlim([-3000, 2200])
+        # plt.ylim([-2500, 2400])
+        if modelo_elegido == 'CAE':
+            plt.xlim([-1500, 1500])
+            plt.ylim([-1500, 1500])
+        else:
+            plt.xlim([-10, 10])
+            plt.ylim([-10, 10])
+        plt.title("Evolución del sujeto " + str(espacio_latente["Sujeto"][paciente]))
+        # ELEGIR DIRECTORIO:
+        plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/EspacioLatente2/Paciente_'+ str(espacio_latente["Sujeto"][paciente])+'_'+str(espacio_latente["Año"][paciente])+"_"+str(epoch)+'.jpg')
+        plt.clf()
+        # Variable 4 vs Variable 5
+        plt.scatter(espacio_latente["Variable 0"][:], espacio_latente["Variable 2"][:], color=[0.5647, 0.0471, 0.2471], alpha=0.1)
+        plt.scatter(espacio_latente["Variable 0"][paciente], espacio_latente["Variable 2"][paciente], color=[0,0.3,1])
+        plt.xlabel('Variable 4')
+        plt.ylabel('Variable 5')
+        # plt.xlim([-3000, 2200])
+        # plt.ylim([-2500, 2400])
+        if modelo_elegido == 'CAE':
+            plt.xlim([-1500, 1500])
+            plt.ylim([-1500, 1500])
+        else:
+            plt.xlim([-10, 10])
+            plt.ylim([-10, 10])
+        plt.title("Evolución del sujeto " + str(espacio_latente["Sujeto"][paciente]))
+        # ELEGIR DIRECTORIO:
+        plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/ImagenesReconstruidas/EspacioLatente3/Paciente_'+ str(espacio_latente["Sujeto"][paciente])+'_'+str(espacio_latente["Año"][paciente])+"_"+str(epoch)+'.jpg')
+        plt.clf()
 
 #--------------------------------------------------------------------------------------------------
 def representa_perdidas(diz_loss, modelo_elegido):
@@ -283,7 +248,7 @@ def guarda_perdidas(diz_loss, modelo_elegido, num_epoch, d):
             plt.ylim([-4e6, 0.6e6])
             plt.legend()
             plt.title('Función de pérdidas')
-            plt.savefig(SAVE_PATH+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/FuncionPerdidas/decoded'+ str(i)+'.jpg')
+            plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/FuncionPerdidas/decoded'+ str(i)+'.jpg')
             plt.clf()
             plt.close()
     else:
@@ -297,7 +262,7 @@ def guarda_perdidas(diz_loss, modelo_elegido, num_epoch, d):
             plt.ylim([4e-3, 0.3])
             plt.legend()
             plt.title('Función de pérdidas')
-            plt.savefig(SAVE_PATH+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/FuncionPerdidas/decoded'+ str(i)+'.jpg')
+            plt.savefig('C:/TFG/Trabajo/Resultados/'+str(d)+'_dimensiones_latentes/'+str(num_epoch)+'epochs/'+modelo_elegido+'/FuncionPerdidas/decoded'+ str(i)+'.jpg')
             plt.clf()
             plt.close()
 

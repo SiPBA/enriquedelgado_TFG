@@ -18,6 +18,7 @@ for patno in dataset.PATNO:
         datos.loc[intervals.abs().idxmin(),'file'] = fil.replace(DATA_PATH, '')
     dataset.loc[datos.index,'file'] = datos.file
 #%%
+
 filtered_datas = dataset.dropna(axis='rows', subset=['file'])
 filtered_datas.to_csv(os.path.join(DATA_PATH, 'dataset_novisimo.csv'))
 # %%
