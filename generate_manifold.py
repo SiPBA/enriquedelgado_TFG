@@ -10,13 +10,13 @@ ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENT
 # ruta = 'C:\TFG\IMAGENES_TFG/'
 num_epochs = 300
 modelo_elegido='genvae'
-d = 3
-lr = 1e-3 # 3e-4
-batch_size = 16
-PARAM_BETA = 100.
-PARAM_LOGSIGMA = np.log(.1)
-PARAM_NORM = 3
-filename = f'Conv3DVAE_d{d}_BETA{int(PARAM_BETA)}_lr{lr:.0E}_bs{batch_size}_n{num_epochs}_norm{PARAM_NORM}'
+d = 8
+bs = 16
+num_epochs=200
+lr = 1E-3
+norm = 3
+BETA = 100
+filename = f'Conv3DVAE_d{d}_BETA{int(BETA)}_lr{lr:.0E}_bs{bs}_n{num_epochs}_norm{norm}'
 
 #%% Create model
 vae = models.Conv3DVAE(encoder=models.Conv3DVAEEncoder,
@@ -41,33 +41,30 @@ input_holder = np.zeros((1, 2))
 container = torch.zeros((xx.size,1)+ image_size)
 batch_size = 16
 
-input_holder = torch.Tensor(np.c_[xx.flatten(), [DEFAULT_Z]*xx.size, yy.flatten()])
+variables = [1, 6]
+input_holder = []
+for i in range(d):
+    if i==variables[0]:
+        input_holder.append(xx.flatten())
+    elif i==variables[1]:
+        input_holder.append(yy.flatten())
+    else:
+        input_holder.append([DEFAULT_Z]*xx.size)
+
+input_holder = torch.Tensor(np.c_[input_holder].T)
 for i in tqdm(range(0, len(input_holder), batch_size)):
     with torch.no_grad():
         output = vae.decode(input_holder[i:i+batch_size])
     container[i:i+batch_size] = output
 
 #%% CREATE GRID
-grid = torchvision.utils.make_grid(container[..., slic], nrow=len(values))
+grid = torchvision.utils.make_grid(container[...,60,:,:], nrow=len(values))
 
 
 #%% Show manifold
 import matplotlib.pyplot as plt 
 plt.figure(figsize=(20,20))
-plt.imshow(grid[0], vmin=0.5, vmax=1)
-# %% VISUALIZE CORRELATIONS
-import seaborn as sns
-import pandas as pd 
-from sklearn.decomposition._factor_analysis import _ortho_rotation
+plt.imshow(grid[0], vmin=0, vmax=1)
 
-espacio_latente = pd.read_csv(filename+'.csv')
-espacio_rotated = espacio_latente.copy()
-espacio_rotated[[f'Variable {i}' for i in range(d)]] = _ortho_rotation(espacio_latente[[f'Variable {i}' for i in range(d)]].values).T
-# espacio_latente = df_latente(test_dataloader, vae, modelo_elegido, device)
-
-g = sns.clustermap(espacio_latente.corr(), center=0, cmap="vlag",
-                   dendrogram_ratio=(.1, .2),
-                   cbar_pos=(.02, .32, .03, .2),
-                   linewidths=.75, figsize=(12, 13))
 
 # %%

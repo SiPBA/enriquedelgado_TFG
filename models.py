@@ -180,9 +180,12 @@ class Conv3DVAEEncoder(nn.Module):
         z = mu + eps * std
         return z
     
-    def kl_loss(self, mu, logvar):
+    def kl_loss(self, mu, logvar, reduction='sum'):
         kl_batch =  -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-        return kl_batch.sum()
+        if reduction=='sum':
+            return kl_batch.sum()
+        else:
+            return kl_batch.mean()
     
 class Conv3DVAEDecoder(nn.Module):
     def __init__(self, latent_dim=20):
@@ -205,13 +208,28 @@ class Conv3DVAEDecoder(nn.Module):
         x = F.sigmoid(self.conv4(x))
         return x
     
-    def recon_loss(self, targets, predictions):
+    def recon_loss(self, targets, predictions, reduction='sum'):
         # From arXiv calibrated decoder: arXiv:2006.13202v3
         # D is the dimensionality of x. 
-        r_loss = F.mse_loss(predictions, targets, reduction="sum")
+        r_loss = F.mse_loss(predictions, targets, reduction=reduction)
         # torch.pow(predictions-targets, 2).mean(dim=(1,2,3,4)) #+ D * self.logsigma
         return r_loss
+    
 
+class Conv3DVAEDecoderWParams(Conv3DVAEDecoder):
+
+    def forward(self, x, params):
+        # Decode
+        assert x.shape[1] == params.shape[1]
+        x = torch.cat((x, params), 1)
+        x = F.relu(self.fc1(x))
+        x = x.view(-1, 256, 6, 8, 6)
+        x = F.relu(self.conv1(x))
+        x = F.relu(self.conv2(x))
+        x = F.relu(self.conv3(x))
+        x = F.sigmoid(self.conv4(x))
+        return x
+    
 class Conv3DVAEEncoderDilation(nn.Module):
     def __init__(self, latent_dim=3):
         super(Conv3DVAEEncoderDilation, self).__init__()
@@ -251,9 +269,12 @@ class Conv3DVAEEncoderDilation(nn.Module):
         z = self.reparameterize(mu, logvar)
         return z, mu, logvar
     
-    def kl_loss(self, mu, logvar):
+    def kl_loss(self, mu, logvar, reduction='sum'):
         kl_batch =  -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp(), dim=1)
-        return kl_batch.sum()
+        if reduction=='sum':
+            return kl_batch.sum()
+        else:
+            return kl_batch.mean()
 
 
 class Conv3DVAEDecoderAlt(nn.Module):
@@ -305,9 +326,9 @@ class Gen3DVAE(nn.Module):
 
         return z, z_mean, z_logvar, x_recon
     
-    def loss_function(self, x, x_recon, z_mean, z_logvar, beta=1.):
-        kl_loss = self.encode.kl_loss(z_mean, z_logvar)
-        recon_loss = self.decode.recon_loss_calibrated(x, x_recon)
+    def loss_function(self, x, x_recon, z_mean, z_logvar, beta=1., reduction='sum'):
+        kl_loss = self.encode.kl_loss(z_mean, z_logvar, reduction=reduction)
+        recon_loss = self.decode.recon_loss_calibrated(x, x_recon, reduction=reduction)
         return recon_loss + beta*kl_loss, recon_loss, kl_loss
 
 
@@ -328,10 +349,22 @@ class Conv3DVAE(nn.Module):
 
         return z, z_mean, z_logvar, x_recon
 
-    def loss_function(self, x, x_recon, z_mean, z_logvar, beta=1.):
-        kl_loss = self.encode.kl_loss(z_mean, z_logvar)
-        recon_loss = self.decode.recon_loss(x, x_recon)
+    def loss_function(self, x, x_recon, z_mean, z_logvar, beta=1., reduction='sum'):
+        kl_loss = self.encode.kl_loss(z_mean, z_logvar, reduction=reduction)
+        recon_loss = self.decode.recon_loss(x, x_recon, reduction=reduction)
         return recon_loss + beta*kl_loss, recon_loss, kl_loss
+
+
+class Conv3DVAEWParams(Conv3DVAE):
+
+    def forward(self, x, params):
+        # Encode
+        z, z_mean, z_logvar = self.encode(x)
+
+        # Decode
+        x_recon = self.decode(z, params)
+
+        return z, z_mean, z_logvar, x_recon
 
 
     # def loss_function(self, x, x_recon, z_mean, z_logvar, beta=1.):

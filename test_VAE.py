@@ -12,15 +12,16 @@ import torchvision
 
 ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/'
 # ruta = 'C:\TFG\IMAGENES_TFG/'
-num_epochs = 200
+num_epochs = 205
 modelo_elegido='genvae'
-d = 20
+d = 3
 lr = 1e-3 # 3e-4
 batch_size = 16
-PARAM_BETA = 100.
-PARAM_LOGSIGMA = np.log(.1)
+PARAM_BETA = 1.
+# PARAM_LOGSIGMA = np.log(.1)
 PARAM_NORM = 3
-filename = f'Conv3DVAE_d{d}_BETA{int(PARAM_BETA)}_lr{lr:.0E}_bs{batch_size}_n{num_epochs}_norm{PARAM_NORM}'
+PARAM_REDUCTION = 'mean'
+filename = f'Conv3DVAE_d{d}_BETA{int(PARAM_BETA)}_red{PARAM_REDUCTION}_lr{lr:.0E}_bs{batch_size}_n{num_epochs}_norm{PARAM_NORM}'
 
 train_dataset = HDFImageDataset('medical_images.hdf5', norm=PARAM_NORM)
 train_loader = DataLoader(train_dataset, batch_size=batch_size, pin_memory=True, shuffle=True)
@@ -44,7 +45,6 @@ vae = torch.compile(vae)
 
 # encoder, decoder = models.Conv3DVAEEncoderDilation(latent_size=d), models.Conv3DVAEDecoderAlt(latent_dim=d)
 
-#%% 
 # vae.load_state_dict(torch.load(filename+'.pth'))
 writer = SummaryWriter('runs/'+filename)
 optimizer = torch.optim.Adam(vae.parameters(), lr=lr)
@@ -65,7 +65,7 @@ for e in range(start, num_epochs):
         image_batch = image_batch[0].to(device)
         # forward pass:
         z, z_mean, z_logvar, x_recon = vae(image_batch)
-        loss, recon_loss, kl_loss = vae.loss_function(image_batch, x_recon, z_mean, z_logvar, beta=PARAM_BETA)
+        loss, recon_loss, kl_loss = vae.loss_function(image_batch, x_recon, z_mean, z_logvar, beta=PARAM_BETA, reduction=PARAM_REDUCTION)
         loss.backward()
         optimizer.step()
         if ix%5==0:
