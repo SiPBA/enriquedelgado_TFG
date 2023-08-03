@@ -12,14 +12,14 @@ import torchvision
 
 ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/'
 # ruta = 'C:\TFG\IMAGENES_TFG/'
-num_epochs = 500
+num_epochs = 100
 modelo_elegido='genvae'
-d = 8
-lr = 1e-3 # 3e-4
-batch_size = 16
-PARAM_BETA = 100.
+d = 3
+lr = 1e-4 # 3e-4
+batch_size = 64
+PARAM_BETA = 1.
 # PARAM_LOGSIGMA = np.log(.1)
-PARAM_NORM = 5
+PARAM_NORM = 4
 PARAM_REDUCTION = 'sum'
 filename = f'Conv3DVAE_d{d}_BETA{int(PARAM_BETA)}_red{PARAM_REDUCTION}_lr{lr:.0E}_bs{batch_size}_n{num_epochs}_norm{PARAM_NORM}'
 
@@ -39,7 +39,7 @@ device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cp
 vae = models.Conv3DVAE(encoder=models.Conv3DVAEEncoder,
                        decoder=models.Conv3DVAEDecoder,
                        latent_dim=d)
-
+#%% 
 vae = vae.to(device)
 vae = torch.compile(vae)
 
@@ -106,15 +106,16 @@ with torch.no_grad():
 grid_orig = torchvision.utils.make_grid(image_batch[...,40], nrow=int(np.sqrt(batch_size)))
 grid = torchvision.utils.make_grid(x_recon[...,40], nrow=int(np.sqrt(batch_size)))
 fig, ax = plt.subplots(ncols=3,figsize=(15,4))
-ax[0].imshow(grid_orig[0].cpu().numpy(), vmin=0, vmax=3)
+ax[0].imshow(grid_orig[0].cpu().numpy(), vmin=0.5, vmax=1)
 ax[0].set_title('Images original')
-ax[1].imshow(grid[0].detach().cpu().numpy(), vmin=0, vmax=2)
+ax[1].imshow(grid[0].detach().cpu().numpy(), vmin=0.5, vmax=1)
 ax[1].set_title('Images recon')
 dim = 0
 ax[2].errorbar(z_mean[:,dim].detach().cpu(), updrs_tot, yerr=z_logvar[:,dim].detach().cpu().exp(), fmt='o')
 ax[2].set_title('batch latent manifold')
 ax[2].set_xlabel(f'Variable {dim}')
 ax[2].set_ylabel('UPDRS totscore on')
+fig.savefig('images/'+filename+'.jpg')
 # %% GUARDAR RESULTADOS
 torch.save(vae.state_dict(), filename+'.pth')
 espacio_latente.to_csv(filename+'.csv')

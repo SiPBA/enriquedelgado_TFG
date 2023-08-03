@@ -8,15 +8,16 @@ from tqdm import tqdm
 
 ruta = '/home/pakitochus/Universidad/Investigación/Databases/parkinson/PPMI_ENTERA/IMAGENES_TFG/'
 # ruta = 'C:\TFG\IMAGENES_TFG/'
-num_epochs = 300
+num_epochs = 200
 modelo_elegido='genvae'
-d = 8
+d = 20
 bs = 16
 num_epochs=200
-lr = 1E-3
+lr = 1E-03
 norm = 3
 BETA = 100
-filename = f'Conv3DVAE_d{d}_BETA{int(BETA)}_lr{lr:.0E}_bs{bs}_n{num_epochs}_norm{norm}'
+# filename = f'Conv3DVAE_d{d}_BETA{int(BETA)}_lr{lr:.0E}_bs{bs}_n{num_epochs}_norm{norm}'
+filename = 'Conv3DVAE_d20_BETA100_lr1E-03_bs16_n200_norm3'
 
 #%% Create model
 vae = models.Conv3DVAE(encoder=models.Conv3DVAEEncoder,
@@ -34,14 +35,14 @@ vae.eval()
 slic = 40
 DEFAULT_Z = 0
 image_size = (96, 128, 96) #2D images
-values = np.arange(-5, 5, .5)
+values = np.linspace(-5, 5, 6)
 xx, yy = np.meshgrid(values, values)
 input_holder = np.zeros((1, 2))
 # Matrix that will contain the grid of images
 container = torch.zeros((xx.size,1)+ image_size)
 batch_size = 16
 
-variables = [1, 6]
+variables = [2, 10]
 input_holder = []
 for i in range(d):
     if i==variables[0]:
@@ -58,13 +59,18 @@ for i in tqdm(range(0, len(input_holder), batch_size)):
     container[i:i+batch_size] = output
 
 #%% CREATE GRID
-grid = torchvision.utils.make_grid(container[...,60,:,:], nrow=len(values))
+grid = torchvision.utils.make_grid(container[...,45], nrow=len(values))
 
 
 #%% Show manifold
 import matplotlib.pyplot as plt 
-plt.figure(figsize=(20,20))
-plt.imshow(grid[0], vmin=0, vmax=1)
-
+fig, ax = plt.subplots(figsize=(7,7))
+ax.imshow(grid[0], vmin=0, vmax=1, origin='lower')
+ax.set_xlabel('Variable 2')
+ax.set_ylabel('Variable 10')
+ax.set_yticks((values+5)*96/2+96//2+1)
+ax.set_yticklabels(values)
+ax.set_xticks((values+5)*128/2+128//2+1)
+ax.set_xticklabels(values)
 
 # %%

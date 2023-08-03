@@ -123,7 +123,7 @@ class HDFImageDataset(Dataset):
         image_data = torch.from_numpy(image_dataset[()].squeeze().astype('float32')) 
         image_data = F.pad(input=image_data, pad=(0,5,0,19,0,5), mode='constant', value=0)
         try:
-            image_data = torch.reshape(image_data, (1,96,128,96))/self.norm
+            image_data = F.sigmoid(torch.reshape(image_data, (1,96,128,96))/self.norm)
         except:
             print(f'{patno} - {year}') 
 

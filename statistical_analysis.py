@@ -4,14 +4,14 @@ import pandas as pd
 import matplotlib.pyplot as plt 
 from sklearn.decomposition._factor_analysis import _ortho_rotation # varimax
 
-d = 8
+d = 3
 bs = 16
 num_epochs=200
 lr = 1E-3
 norm = 3
 BETA = 100
-filename = f'Conv3DVAE_d{d}_BETA{int(BETA)}_lr{lr:.0E}_bs{bs}_n{num_epochs}_norm{norm}'
-
+# filename = f'Conv3DVAE_d{d}_BETA{int(BETA)}_lr{lr:.0E}_bs{bs}_n{num_epochs}_norm{norm}'
+filename = 'Conv3DVAE_d3_BETA1_redsum_lr1E-04_bs64_n100_norm4'
 espacio_latente = pd.read_csv(filename+'.csv', index_col=0)
 #%% CORRELATION ANALYSIS
 
@@ -26,16 +26,16 @@ g = sns.clustermap(espacio_latente.drop(['Sujeto', 'Año'], axis=1).corr(), cent
 #%%
 espacio_latente.plot(x='Variable 5', y='updrs_totscore_on', kind='scatter')
 # %%
-sns.lmplot(data=espacio_latente, x='Variable 2', y='updrs_totscore_on', hue='nhy')
+sns.lmplot(data=espacio_latente, x='Variable 0', y='updrs_totscore_on', hue='nhy')
 
 # %% RENORMALIZE TO BL STATE: 
 espacio_copia = espacio_latente.copy()
-fig, ax = plt.subplots(ncols=8, nrows=4, figsize=(20, 20))
+fig, ax = plt.subplots(ncols=d, nrows=4, figsize=(2.5*d, 20))
 for ix, el in iter(espacio_copia.groupby('Sujeto')):
     el -= el.sort_values('Año').iloc[0]
     espacio_copia.loc[el.index,:] = el
     for ib in range(4):
-        for ia in range(8):
+        for ia in range(d):
             ax[ib][ia].plot(el[f'Variable {ia}'], el[f'updrs{ib+1}_score'])
 
 # %%
@@ -49,14 +49,13 @@ g = sns.clustermap(espacio_rotated.drop(['Sujeto', 'Año'], axis=1).corr(), cent
                    cbar_pos=(.02, .32, .03, .2),
                    linewidths=.75)
 #%% 
-fig, ax = plt.subplots(ncols=8, nrows=4, figsize=(20, 20))
+fig, ax = plt.subplots(ncols=d, nrows=4, figsize=(2.5*d, 20))
 for ib in range(4):
-    for ia in range(8):
+    for ia in range(d):
         # ax[ib][ia].plot(el[f'Variable {ia}'], el[f'updrs{ib+1}_score'])
-        sns.kdeplot(
+        sns.jointplot(
             x=f'Variable {ia}', y=f'updrs{ib+1}_score',
-            data=espacio_copia, 
-            fill=True,
+            data=espacio_latente, kind='hex', 
             ax=ax[ib][ia],
         )
 # %%
