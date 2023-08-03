@@ -1,1 +1,4 @@
 runs/
+AutoML_results/
+__pycache__/
+*.pth
