@@ -156,8 +156,8 @@ class Conv3DVAEEncoder(nn.Module):
         self.conv1 = nn.Conv3d(1, 32, kernel_size=3, stride=2, padding=1)
         self.conv2 = nn.Conv3d(32, 64, kernel_size=3, stride=2, padding=1)
         self.conv3 = nn.Conv3d(64, 128, kernel_size=3, stride=2, padding=1)
-        self.conv4 = nn.Conv3d(128, 256, kernel_size=3, stride=2, padding=1)
-        self.fc1 = nn.Linear(256 * 6 * 8 * 6, 512)
+        self.conv4 = nn.Conv3d(128, 256, kernel_size=3, stride=2, padding=1) # 294 912 pesos
+        self.fc1 = nn.Linear(256 * 6 * 8 * 6, 512) # 37 748 736 pesos
         self.fc2_mean = nn.Linear(512, latent_dim)
         self.fc2_logvar = nn.Linear(512, latent_dim)
 
@@ -310,7 +310,17 @@ class Conv3DVAEDecoderAlt(nn.Module):
 
 
 class Gen3DVAE(nn.Module):
+    """ Generic 3D VAE. 
+    """
     def __init__(self, encoder, decoder, latent_dim=20, logsigma=1.0):
+        """_summary_
+
+        Args:
+            encoder (nn.Module): cualquier tipo de encoder que devuelva z, z_mean y z_logvar, y tenga una funcion kl_loss().
+            decoder (nn.Module): cualquier tipo de decoder que devuelva x_recon y tenga función recon_loss() 
+            latent_dim (int, optional): Dimensión del espacio latente. Defaults to 20.
+            logsigma (float, optional): Valor asumido de la log-desviacion-estandar. Defaults to 1.0.
+        """
         super().__init__()
         self.latent_dim = latent_dim
 
@@ -327,13 +337,33 @@ class Gen3DVAE(nn.Module):
         return z, z_mean, z_logvar, x_recon
     
     def loss_function(self, x, x_recon, z_mean, z_logvar, beta=1., reduction='sum'):
+        """Función de pérdidas genérica
+
+        Args:
+            x (torch.Tensor): Imagen original
+            x_recon (_type_): Imagen reconstruida
+            z_mean (_type_): Parametro u de la distribución Z
+            z_logvar (_type_): Parámetro log-varianza de la distribución Z
+            beta (_type_, optional): Coeficiente para beta-VAE. Defaults to 1..
+            reduction (str, optional): Reducción de la función de pérdida. Defaults to 'sum'.
+
+        Returns:
+            _type_: Pérdida total (con suma de beta), error de reconstrucción y kl-loss
+        """
         kl_loss = self.encode.kl_loss(z_mean, z_logvar, reduction=reduction)
         recon_loss = self.decode.recon_loss_calibrated(x, x_recon, reduction=reduction)
         return recon_loss + beta*kl_loss, recon_loss, kl_loss
 
 
-class Conv3DVAE(nn.Module):
+class Conv3DVAE(nn.Module): # ESTE ES EL QUE HEMOS USADO DE VERDAD
     def __init__(self, encoder, decoder, latent_dim=20):
+        """ Estructura de 3D VAE convolucional
+
+        Args:
+            encoder (nn.Module): cualquier tipo de encoder que devuelva z, z_mean y z_logvar, y tenga una funcion kl_loss().
+            decoder (nn.Module): cualquier tipo de decoder que devuelva x_recon y tenga función recon_loss() 
+            latent_dim (int, optional): Dimensión del espacio latente. Defaults to 20.
+        """
         super(Conv3DVAE, self).__init__()
         self.latent_dim = latent_dim
 
@@ -350,6 +380,19 @@ class Conv3DVAE(nn.Module):
         return z, z_mean, z_logvar, x_recon
 
     def loss_function(self, x, x_recon, z_mean, z_logvar, beta=1., reduction='sum'):
+        """Función de pérdidas genérica
+
+        Args:
+            x (torch.Tensor): Imagen original
+            x_recon (_type_): Imagen reconstruida
+            z_mean (_type_): Parametro u de la distribución Z
+            z_logvar (_type_): Parámetro log-varianza de la distribución Z
+            beta (_type_, optional): Coeficiente para beta-VAE. Defaults to 1..
+            reduction (str, optional): Reducción de la función de pérdida. Defaults to 'sum'.
+
+        Returns:
+            _type_: Pérdida total (con suma de beta), error de reconstrucción y kl-loss
+        """
         kl_loss = self.encode.kl_loss(z_mean, z_logvar, reduction=reduction)
         recon_loss = self.decode.recon_loss(x, x_recon, reduction=reduction)
         return recon_loss + beta*kl_loss, recon_loss, kl_loss
