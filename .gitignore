@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+ENV/
+pip-selfcheck.json
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.tox/
+.nox/
+.coverage
+.hypothesis/
+
+# Archivos de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de IDE / Editor
+.vscode/
+.idea/
+*.swp
+*~
